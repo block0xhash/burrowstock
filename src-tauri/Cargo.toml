@@ -1,0 +1,40 @@
+[package]
+name        = "burrowstock"
+version     = "0.1.0"
+description = "Snap it. Burrow it. Find it. Sell it."
+authors     = ["Burrowstock"]
+edition     = "2021"
+
+[lib]
+name = "burrowstock_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "burrowstock"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri         = { version = "2",  features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs     = "2"
+tauri-plugin-shell  = "2"
+tauri-plugin-store  = "2"
+rusqlite      = { version = "0.31", features = ["bundled"] }
+serde         = { version = "1",   features = ["derive"] }
+serde_json    = "1"
+reqwest       = { version = "0.12", features = ["json", "multipart"] }
+base64        = "0.22"
+tokio         = { version = "1",   features = ["full"] }
+uuid          = { version = "1",   features = ["v4"] }
+chrono        = { version = "0.4", features = ["serde"] }
+thiserror     = "1"
+
+[profile.release]
+panic   = "abort"
+codegen-units = 1
+lto     = true
+opt-level = "s"   # optimise for size — smallest binary
+strip   = true
