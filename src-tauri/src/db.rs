@@ -15,12 +15,9 @@ use thiserror::Error;
 
 // ── Error type ────────────────────────────────────────────────────────────────
 #[derive(Error, Debug)]
-#[allow(dead_code)]
 pub enum DbError {
     #[error("Database error: {0}")]
     Sqlite(#[from] rusqlite::Error),
-    #[error("{0}")]
-    Logic(String),
 }
 
 // ── Shared state ──────────────────────────────────────────────────────────────

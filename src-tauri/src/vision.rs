@@ -201,7 +201,7 @@ Return ONLY a valid JSON object — no markdown, no explanation:
       "name": "string — as specific as possible e.g. Cisco Catalyst 2960 24-Port Switch",
       "category": "string — e.g. Networking, Laptop, Cable, Tool, Book, Clothing",
       "confidence": "High | Medium | Low",
-      "condition": "new | like_new | good | fair | poor | unknown",
+      "condition": "brand_new | like_new | very_good | good | acceptable | unknown",
       "notes": "string — condition details, visible damage, missing parts, colour",
       "distinguishing_features": "string — ports, labels, model numbers, unique markings"
     }
@@ -282,8 +282,6 @@ Return ONLY valid JSON — no markdown, no explanation:
   "keywords": ["array", "5-10", "search", "terms", "buyers", "would", "use"]
 }"#;
 
-const LISTING_SYSTEM: &str = DEFAULT_LISTING_PROMPT;
-
 pub fn default_listing_prompt() -> &'static str {
     DEFAULT_LISTING_PROMPT
 }
@@ -310,7 +308,7 @@ pub async fn generate_listing(
         text: format!("{}\n\nGenerate a complete eBay listing. Return JSON only.", context),
     }));
 
-    let (text, _, _) = gemini_call(api_key, model, LISTING_SYSTEM, parts).await?;
+    let (text, _, _) = gemini_call(api_key, model, DEFAULT_LISTING_PROMPT, parts).await?;
     let clean = clean_json(&text);
     serde_json::from_str(&clean).map_err(|e| format!("Failed to parse listing: {}", e))
 }

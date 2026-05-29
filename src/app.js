@@ -82,6 +82,7 @@ async function getFileSizeKb(path) {
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
+// ── Boot ─────────────────────────────────────────────────────────────────────────
 async function boot() {
   // Load everything in parallel for fast startup
   const [settings, locations, items, defaultScan, defaultListing] = await Promise.all([
@@ -131,6 +132,7 @@ function applyTheme(theme) {
   document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
 }
 
+// ── Data refresh ────────────────────────────────────────────────────────────────
 async function refreshData() {
   [state.locations, state.items] = await Promise.all([
     window.bs.listLocations(),
@@ -917,6 +919,7 @@ function buildSearchResults(hits, q) {
 
 
 // Model-aware pricing — returns { inp, out } per million tokens
+// ── Pricing ──────────────────────────────────────────────────────────────────────
 function modelPricing(model) {
   const m = (model || '').toLowerCase();
   if (m.includes('3.5-flash'))   return { inp: 1.50, out: 9.00 };
@@ -932,6 +935,7 @@ function modelPricing(model) {
   return { inp: 0.30, out: 2.50 };
 }
 
+// ── Settings helpers ────────────────────────────────────────────────────────────
 function quotaWidget(s) {
   const used  = (s.todayScans || 0) + (s.todayListings || 0);
   const limit = 1500;
@@ -956,6 +960,7 @@ function quotaWidget(s) {
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────
+// ── Settings panel ───────────────────────────────────────────────────────────────
 function settingsPanel() {
   const s        = state.settings;
   const model    = s.geminiModel || 'gemini-3.5-flash';
@@ -1209,6 +1214,7 @@ function settingsPanel() {
 
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
+// ── UI helpers ──────────────────────────────────────────────────────────────────
 function showConfirmModal(message, onConfirm) {
   // Remove any existing modal first
   document.querySelector('.confirm-modal-overlay')?.remove();
@@ -1287,6 +1293,7 @@ function showInlineRename(id, currentName) {
 }
 
 // ── Events ────────────────────────────────────────────────────────────────────
+// ── Events ────────────────────────────────────────────────────────────────────────
 function bindEvents() {
   // ── Navigation ──────────────────────────────────────────────────────────────
   document.querySelectorAll('[data-tab]').forEach(el =>
@@ -1519,23 +1526,7 @@ function bindEvents() {
   });
 
   // Detail tabs
-  document.getElementById('detail-tab-details')?.addEventListener('click', () => { state.detailTab = 'details'; render(); });
-  document.getElementById('detail-tab-sell')?.addEventListener('click',    () => { state.detailTab = 'sell'; render(); });
-  document.getElementById('detail-sell-btn')?.addEventListener('click',    () => { state.detailTab = 'sell'; render(); });
 
-  // Sell quick-launch from location row
-  document.querySelectorAll('[id^="sell-btn-"]').forEach(btn => {
-    btn.addEventListener('click', async e => {
-      e.stopPropagation();
-      const id   = parseInt(btn.id.replace('sell-btn-', ''));
-      const item = await window.bs.getItem(id);
-      state.selectedItem  = item;
-      state.detailTab     = 'sell';
-      state.listing       = null;
-      state.listingPhotos = [];
-      render();
-    });
-  });
 
   // Detail custom condition select
   document.getElementById('detail-cond-trigger')?.addEventListener('click', e => {
@@ -1652,32 +1643,7 @@ function bindEvents() {
     }
   });
 
-  document.getElementById('save-detail-btn')?.addEventListener('click', async () => {
-    if (!state.selectedItem) return;
-    const btn       = document.getElementById('save-detail-btn');
-    const name      = document.getElementById('detail-name')?.value?.trim();
-    const condition = document.getElementById('detail-condition')?.value;
-    const notes     = document.getElementById('detail-notes')?.value?.trim();
-    const newLoc    = document.getElementById('detail-location')?.value;
-
-    if (!name) { showToast('Item name cannot be empty', 'error'); return; }
-
-    if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
-
-    try {
-      if (newLoc && newLoc !== state.selectedItem.location_id)
-        await window.bs.moveItem(state.selectedItem.id, newLoc);
-
-      await window.bs.updateItem(state.selectedItem.id, { name, condition, notes });
-      state.selectedItem = await window.bs.getItem(state.selectedItem.id);
-      await refreshData();
-      showToast('✓ Changes saved', 'success');
-      render();
-    } catch(err) {
-      showToast('Save failed: ' + err, 'error');
-      if (btn) { btn.textContent = 'Save changes'; btn.disabled = false; }
-    }
-  });
+  // save-detail-btn handled via master delegation below
 
   // ── Master click delegation ───────────────────────────────────────────────────
   document.addEventListener('click', e => {
@@ -1725,11 +1691,6 @@ function bindEvents() {
   document.getElementById('generate-listing-btn')?.addEventListener('click', generateListing);
   document.getElementById('regenerate-listing-btn')?.addEventListener('click', generateListing);
 
-  // Platform selector — delegated
-  document.addEventListener('click', e => {
-    const btn = e.target.closest('[data-platform]');
-    if (btn) { state.listingPlatform = btn.dataset.platform; render(); }
-  });
 
   // Copy title
   document.getElementById('copy-title-btn')?.addEventListener('click', () => {
@@ -2381,6 +2342,7 @@ async function saveScan() {
 
 }
 
+// ── Scan stats modal ────────────────────────────────────────────────────────────
 function showScanStats(saved, unsaved, items) {
   const modal = document.createElement('div');
   modal.className = 'scan-stats-modal-overlay';
@@ -2426,6 +2388,7 @@ function showScanStats(saved, unsaved, items) {
 }
 
 // ── eBay listing generation ───────────────────────────────────────────────────
+// ── eBay listing generation ──────────────────────────────────────────────────────
 async function generateListing() {
   if (!state.selectedItem) return;
   state.listingLoading = true;

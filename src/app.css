@@ -1,3 +1,20 @@
+/**
+ * burrowstock — app.css
+ *
+ * Design tokens → component styles → panel layouts.
+ * Supports dark (default) and light themes via [data-theme] on <html>.
+ *
+ * Sections:
+ *   TOKENS       — CSS custom properties (colours, spacing, typography)
+ *   RESET        — base element resets
+ *   LAYOUT       — shell, topbar, sidebar, main area
+ *   COMPONENTS   — buttons, inputs, badges, pills, dropdowns
+ *   PANELS       — locations, scan, items, search, settings
+ *   DETAIL       — item detail panel, sell panel
+ *   MODALS       — confirm modal, scan stats, photo modal
+ *   UTILITIES    — animations, toast, misc
+ */
+
 /* ─────────────────────────────────────────────────────────────────────────────
    burrowstock — app.css
    Design system: navy-dark default, clean light theme, one CSS variable swap.
@@ -912,7 +929,6 @@ select.input option { background: var(--bg-raised); }
 .field-hint { font-size: 10px; color: var(--text-3); font-weight: 400; margin-left: 8px; }
 
 /* ── Settings nav 5 items ────────────────────────────────────────────────────── */
-.settings-nav { width: 200px; }
 
 /* ── Settings world-class overhaul ───────────────────────────────────────────── */
 .settings-divider { height: 1px; background: var(--border); margin: 8px 0; }
