@@ -1151,14 +1151,41 @@ function settingsPanel() {
 
   // ── About ──────────────────────────────────────────────────────────────────
   const aboutSection = `
-    <div class="settings-section">
-      <div class="about-card">
+    <div class="settings-section about-section">
+
+      <div class="about-hero">
         <div class="about-name">burrow<span>stock</span></div>
         <div class="about-tagline">Snap it. Burrow it. Find it. Sell it.</div>
-        <div class="about-version">v0.1.0 · Tauri v2 · Rust · MIT License</div>
+        <div class="about-badges">
+          <span class="about-badge">v0.1.0</span>
+          <span class="about-badge">Tauri v2</span>
+          <span class="about-badge">Rust</span>
+          <span class="about-badge">MIT</span>
+        </div>
       </div>
 
       <div class="about-features">
+        <div class="about-feature">
+          <div class="about-feature-icon">📷</div>
+          <div>
+            <div class="about-feature-title">AI-powered scanning</div>
+            <div class="about-feature-desc">Photograph a pile — Gemini Vision identifies every item, assigns categories and eBay-standard conditions.</div>
+          </div>
+        </div>
+        <div class="about-feature">
+          <div class="about-feature-icon">🔍</div>
+          <div>
+            <div class="about-feature-title">Instant search</div>
+            <div class="about-feature-desc">SQLite FTS5 full-text search across your entire catalog. Finds anything in milliseconds.</div>
+          </div>
+        </div>
+        <div class="about-feature">
+          <div class="about-feature-icon">🏷️</div>
+          <div>
+            <div class="about-feature-title">Listing generator</div>
+            <div class="about-feature-desc">AI writes complete listings for eBay, Facebook Marketplace, Gumtree, and OLX. Copy and paste anywhere.</div>
+          </div>
+        </div>
         <div class="about-feature">
           <div class="about-feature-icon">🔒</div>
           <div>
@@ -1170,23 +1197,39 @@ function settingsPanel() {
           <div class="about-feature-icon">⚡</div>
           <div>
             <div class="about-feature-title">Built with Tauri + Rust</div>
-            <div class="about-feature-desc">Sub-second startup. ~5MB binary. Uses your system WebView — no bundled browser.</div>
+            <div class="about-feature-desc">Sub-second startup. No Electron, no Node.js, no npm. Your system WebView, a Rust backend, SQLite.</div>
           </div>
         </div>
         <div class="about-feature">
-          <div class="about-feature-icon">🤖</div>
+          <div class="about-feature-icon">🔑</div>
           <div>
-            <div class="about-feature-title">Gemini Vision AI</div>
-            <div class="about-feature-desc">Bring your own API key. Free tier covers hundreds of scans per day.</div>
+            <div class="about-feature-title">BYOK — free tier</div>
+            <div class="about-feature-desc">Bring your own Gemini API key. Free tier covers 1,500 scans/day. No credit card needed.</div>
           </div>
         </div>
-        <div class="about-feature">
-          <div class="about-feature-icon">🏷️</div>
-          <div>
-            <div class="about-feature-title">v2: Sell on eBay</div>
-            <div class="about-feature-desc">AI-generated listings, automatic posting, 20% consignment fee via Stripe.</div>
-          </div>
-        </div>
+      </div>
+
+      <div class="about-links">
+        <a href="https://github.com/block0xhash/burrowstock" target="_blank" class="about-link">
+          <span>⌥</span> GitHub
+        </a>
+        <a href="https://aistudio.google.com/apikey" target="_blank" class="about-link">
+          <span>🔑</span> Get Gemini API key
+        </a>
+        <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" class="about-link">
+          <span>💰</span> API pricing
+        </a>
+      </div>
+
+      <div class="about-roadmap">
+        <div class="about-roadmap-title">Roadmap</div>
+        <div class="about-roadmap-item done">✅ v1 — Scan, catalog, search, generate listings</div>
+        <div class="about-roadmap-item">🔜 v2 — One-click post to eBay &amp; Facebook Marketplace</div>
+        <div class="about-roadmap-item">🔜 v3 — Mobile companion app for item photos</div>
+      </div>
+
+      <div class="about-footer">
+        Built by <strong>block0xhash</strong> · MIT License · Data stored at <code>~/.config/burrowstock/</code>
       </div>
     </div>`;
 
@@ -1504,18 +1547,21 @@ function bindEvents() {
   );
 
   // ── Item row click → detail panel ─────────────────────────────────────────────
-  document.querySelectorAll('.item-row[data-item-id]').forEach(el =>
-    el.addEventListener('click', async e => {
-      if (e.target.closest('.row-actions')) return;
-      const item = await window.bs.getItem(parseInt(el.dataset.itemId));
-      state.selectedItem = item;
-      state.detailTab    = 'details';
-      state.listing      = null;
-      state.listingPhotos = [];
-      state.listingPrice  = '';
-      render();
-    })
-  );
+  // Use event delegation for item rows — works after every render
+  document.addEventListener('click', async e => {
+    const row = e.target.closest('.item-row[data-item-id]');
+    if (!row) return;
+    if (e.target.closest('.row-actions')) return;
+    if (e.target.closest('.loc-row-actions')) return;
+    if (e.target.closest('[data-sell-id]')) return;
+    const item = await window.bs.getItem(parseInt(row.dataset.itemId));
+    state.selectedItem  = item;
+    state.detailTab     = 'details';
+    state.listing       = null;
+    state.listingPhotos = [];
+    state.listingPrice  = '';
+    render();
+  });
 
   // ── Detail panel ──────────────────────────────────────────────────────────────
   document.getElementById('detail-close-btn')?.addEventListener('click', () => {
