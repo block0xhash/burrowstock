@@ -1,4 +1,8 @@
-# Windows: force MSVC toolchain to avoid MinGW GNU linker export limit
-# See: https://github.com/tauri-apps/tauri/issues/3319
+# Fix for MSYS2/MinGW GNU linker "export ordinal too large" error.
+# Uses lld linker which has no export limit.
+#
+# Prerequisites (run in MSYS2 terminal):
+#   pacman -S mingw-w64-ucrt-x86_64-lld
+#
 [target.x86_64-pc-windows-gnu]
-rustflags = ["-C", "link-arg=-Wl,--allow-multiple-definition"]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
