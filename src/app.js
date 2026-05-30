@@ -97,6 +97,12 @@ async function boot() {
   state.defaultScanPrompt    = defaultScan    || '';
   state.defaultListingPrompt = defaultListing || '';
 
+  // Migrate old model defaults to 3.5
+  if (!state.settings.geminiModel || state.settings.geminiModel === 'gemini-2.5-flash') {
+    state.settings.geminiModel = 'gemini-3.5-flash';
+    await window.bs.saveSettings(state.settings);
+  }
+
   // Reset daily counters if it's a new day
   const today = new Date().toDateString();
   if (state.settings.quotaDate !== today) {
@@ -321,7 +327,8 @@ function locationsPanel() {
     </div>` : '';
 
   // Get scan photo from first item that has one
-  const scanImg = items.find(i => i.scan_image)?.scan_image;
+  const rawScanImg = items.find(i => i.scan_image)?.scan_image;
+  const scanImg = rawScanImg ? rawScanImg.replace(/\\/g, '/') : null;
   const scanDate = items.length
     ? new Date(items[0].added_at * 1000).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
     : '';
@@ -2348,7 +2355,10 @@ function resetScan() {
 async function choosePhoto() {
   const result = await window.bs.openImage();
   if (!result) return;
-  state.scan = { ...state.scan, phase:'photo', imagePath: result.path, imageUrl: result.url };
+  // Normalise path separators for Windows (backslash → forward slash)
+  const normPath = result.path.replace(/\\/g, '/');
+  const normUrl  = `bslocal://localhost${normPath.startsWith('/') ? normPath : '/' + normPath}`;
+  state.scan = { ...state.scan, phase:'photo', imagePath: result.path, imageUrl: normUrl };
   render();
 }
 
