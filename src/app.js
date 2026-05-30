@@ -35,7 +35,7 @@ const LOC_COLORS_COUNT = LOC_COLORS.length;
 // ── State ─────────────────────────────────────────────────────────────────────
 const state = {
   tab:         'locations',
-  settings:    { geminiKey: '', geminiModel: 'gemini-2.5-flash', theme: 'dark' },
+  settings:    { geminiKey: '', geminiModel: 'gemini-3.5-flash', theme: 'dark' },
   locations:   [],
   items:       [],
   filtered:    [],
@@ -1684,10 +1684,47 @@ function bindEvents() {
   // save-detail-btn handled via master delegation below
 
   // ── Master click delegation ───────────────────────────────────────────────────
-  document.addEventListener('click', e => {
+  document.addEventListener('click', async e => {
     // Settings tab navigation
     const stab = e.target.closest('[data-settings-tab]');
     if (stab) { state.settingsTab = stab.dataset.settingsTab; render(); return; }
+
+    // Theme toggle
+    if (e.target.id === 'theme-toggle') {
+      setTheme(state.settings.theme === 'light' ? 'dark' : 'light');
+      return;
+    }
+
+    // Save API settings
+    if (e.target.id === 'save-settings-btn') {
+      const key   = document.getElementById('gemini-key')?.value?.trim();
+      const model = document.getElementById('model-input')?.value?.trim() || 'gemini-3.5-flash';
+      state.settings.geminiKey   = key;
+      state.settings.geminiModel = model;
+      await window.bs.saveSettings(state.settings);
+      showToast('✓ Settings saved', 'success');
+      render();
+      return;
+    }
+
+    // Load models
+    if (e.target.id === 'fetch-models-btn') {
+      const key = document.getElementById('gemini-key')?.value?.trim();
+      if (!key) { showToast('Enter your API key first', 'error'); return; }
+      e.target.textContent = 'Loading…';
+      e.target.disabled    = true;
+      try {
+        state.geminiModels     = await window.bs.listModels(key);
+        state.settings.geminiKey = key;
+        showToast(`✓ ${state.geminiModels.length} models available`, 'success');
+        render();
+      } catch(err) {
+        showToast('Failed to load models: ' + err, 'error');
+        e.target.textContent = '⟳ Load models';
+        e.target.disabled    = false;
+      }
+      return;
+    }
 
     // Detail tabs
     if (e.target.id === 'detail-tab-details') { state.detailTab = 'details'; render(); return; }
@@ -1698,9 +1735,6 @@ function bindEvents() {
     const pbtn = e.target.closest('[data-platform]');
     if (pbtn) { state.listingPlatform = pbtn.dataset.platform; render(); return; }
 
-    // Theme toggle
-    if (e.target.id === 'theme-toggle') { setTheme(state.settings.theme === 'light' ? 'dark' : 'light'); return; }  // global setTheme
-
     // Prompt lock toggle
     if (e.target.id === 'toggle-prompt-lock-btn') {
       if (state.promptUnlocked) {
@@ -1710,6 +1744,76 @@ function bindEvents() {
           '⚠️ <strong>Superuser mode</strong><br><br>These prompts control how Burrowstock identifies items. Editing incorrectly will break scanning.<br><br>Only proceed if you know what you are changing.',
           () => { state.promptUnlocked = true; render(); }
         );
+      }
+      return;
+    }
+
+    // Scan prompt save/reset
+    if (e.target.id === 'save-scan-prompt-btn') {
+      const prompt = document.getElementById('scan-prompt-input')?.value?.trim();
+      state.settings.scanPrompt = (prompt && prompt !== state.defaultScanPrompt) ? prompt : null;
+      await window.bs.saveSettings(state.settings);
+      showToast('✓ Scan prompt saved', 'success');
+      render();
+      return;
+    }
+    if (e.target.id === 'reset-scan-prompt-btn') {
+      const el = document.getElementById('scan-prompt-input');
+      if (el) el.value = state.defaultScanPrompt;
+      showToast('Default prompt loaded — click Save to apply', 'success');
+      return;
+    }
+
+    // eBay prompt save/reset
+    if (e.target.id === 'save-ebay-prompt-btn') {
+      const prompt = document.getElementById('ebay-prompt-input')?.value?.trim();
+      state.settings.ebayPrompt = (prompt && prompt !== state.defaultListingPrompt) ? prompt : null;
+      await window.bs.saveSettings(state.settings);
+      showToast('✓ eBay prompt saved', 'success');
+      render();
+      return;
+    }
+    if (e.target.id === 'reset-ebay-prompt-btn') {
+      const el = document.getElementById('ebay-prompt-input');
+      if (el) el.value = state.defaultListingPrompt;
+      showToast('Default prompt loaded — click Save to apply', 'success');
+      return;
+    }
+
+    // Copy listing
+    if (e.target.id === 'copy-listing-btn') {
+      const l       = state.listing;
+      const price   = document.getElementById('listing-price-input')?.value || l?.price_low;
+      const platform = state.listingPlatform || 'ebay';
+      if (!l) return;
+      const text = platform === 'ebay'
+        ? `TITLE: ${l.title}
+
+CONDITION: ${l.condition}
+CATEGORY: ${l.category}
+PRICE: $${price}
+
+DESCRIPTION:
+${l.description}
+
+SEARCH TERMS: ${(l.keywords||[]).join(', ')}`
+        : `${l.title}
+
+Condition: ${l.condition}
+Price: $${price}
+
+${l.description}
+
+Keywords: ${(l.keywords||[]).join(', ')}`;
+      navigator.clipboard.writeText(text);
+      showToast('✓ Listing copied to clipboard', 'success');
+      return;
+    }
+
+    if (e.target.id === 'copy-title-btn') {
+      if (state.listing?.title) {
+        navigator.clipboard.writeText(state.listing.title);
+        showToast('✓ Title copied', 'success');
       }
       return;
     }
