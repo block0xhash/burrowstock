@@ -1,0 +1,4 @@
+# Windows: force MSVC toolchain to avoid MinGW GNU linker export limit
+# See: https://github.com/tauri-apps/tauri/issues/3319
+[target.x86_64-pc-windows-gnu]
+rustflags = ["-C", "link-arg=-Wl,--allow-multiple-definition"]

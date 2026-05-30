@@ -8,95 +8,16 @@ Built with Tauri v2 + Rust. Sub-second startup. No cloud. No accounts. No subscr
 
 ---
 
-## What it does
+## Quick start
 
-### 📷 AI-Powered Scanning
-Photograph a pile of items — a box of electronics, a shelf of tools, a wardrobe. Gemini Vision identifies every single item visible, even partially hidden ones. One photo can yield 20+ catalogued items in seconds.
+```bash
+git clone https://github.com/block0xhash/burrowstock.git
+cd burrowstock
+cargo install tauri-cli --version "^2.0"
+cargo tauri dev
+```
 
-- Identifies brand, model, generation, ports (for IT hardware)
-- Notes condition, colour, size, visible defects
-- Assigns eBay-standard conditions: Brand New / Like New / Very Good / Good / Acceptable
-- Shows confidence score per item
-- Tracks tokens used and estimated API cost per scan
-
-### 📦 Location Catalog
-Organise your inventory by physical location — boxes, shelves, rooms, storage units.
-
-- Create unlimited locations with colour coding
-- Inline rename and delete with confirmation
-- Each location stores the original scan photo
-- Click the scan photo thumbnail to open a full zoom/pan modal
-- Items list with category badges and condition indicators
-- Filter items within a location instantly
-
-### 🔍 Full-Text Search
-Find anything across your entire catalog instantly using SQLite FTS5 — same technology that powers search in major applications.
-
-- Search by item name, notes, category, or location
-- Results appear as you type with 150ms debounce
-- Matching text highlighted in results
-- Results grouped by location, collapsible
-- Handles thousands of items with no slowdown
-
-### 🏷️ AI Listing Generator
-Select an item, add individual photos (not the pile — just that item), and generate a complete marketplace listing.
-
-- Supports: **eBay**, **Facebook Marketplace**, **Gumtree**, **OLX**
-- AI writes keyword-rich titles (max 80 chars for eBay)
-- Full description with honest condition report
-- Market-based price estimate with low/high range
-- Keywords/search terms included
-- Copy listing to clipboard — paste anywhere
-- Platform-specific format (formal for eBay, casual for Facebook)
-
-### ✏️ Item Management
-Full CRUD on every item in your catalog.
-
-- Click any item to open detail panel
-- Edit name, condition, location, notes inline
-- Move items between locations
-- Custom dropdowns — no broken native selects on Linux
-- Rename and delete with undo-safe confirmation modals
-- Changes save in under a second (targeted SQLite writes, no full reload)
-
-### 📊 Usage & Cost Tracking
-Know exactly what you're spending on AI.
-
-- Tracks scan tokens and listing tokens separately
-- Model-aware pricing (Gemini 3.5 Flash, 2.5 Flash, Flash Latest, etc.)
-- Daily quota bar — shows usage vs free tier limit (1,500 req/day)
-- Estimated locally, links to Google AI Studio for real quota
-- Resets at midnight Pacific Time
-
-### ⚙️ Settings
-- Bring your own Gemini API key — stored locally, never sent anywhere except Google
-- Load all available models from your API key
-- Dark and light theme (toggle in topbar)
-- AI prompts visible in read-only mode — unlock with superuser confirmation to edit
-- Separate scan prompt and listing prompt, both fully customisable
-
-### 🔒 Privacy
-- **Everything stays on your machine.** Photos, catalog, API key.
-- The only outbound connection is to `generativelanguage.googleapis.com` when you scan or generate a listing.
-- SQLite database at `~/.config/burrowstock/catalog.db`
-- Settings at `~/.config/burrowstock/settings.json`
-- No telemetry. No analytics. No accounts.
-
----
-
-## Stack
-
-| Layer | Technology |
-|---|---|
-| Desktop shell | Tauri v2 |
-| Backend | Rust |
-| Database | SQLite + FTS5 (rusqlite) |
-| AI Vision | Google Gemini API (gemini-flash-latest) |
-| HTTP | reqwest (Rust) |
-| UI | Vanilla JS + CSS — no framework |
-| Image serving | Custom `bslocal://` Rust protocol handler |
-
-No npm. No node_modules. No Electron. No bundler.
+First run compiles Rust (~3 minutes). After that, starts in under a second.
 
 ---
 
@@ -106,9 +27,6 @@ No npm. No node_modules. No Electron. No bundler.
 ```bash
 # Rust (if not installed)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Tauri CLI
-cargo install tauri-cli
 ```
 
 ### Linux (Ubuntu/Debian)
@@ -127,19 +45,24 @@ xcode-select --install
 ```
 
 ### Windows
-Install [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).
-
----
-
-## Run
+Tauri on Windows requires the **MSVC toolchain** — MinGW/GNU will hit a linker limit.
 
 ```bash
-git clone https://github.com/block0xhash/burrowstock
-cd burrowstock
-cargo tauri dev
+# Add MSVC target
+rustup target add x86_64-pc-windows-msvc
+
+# Install Visual C++ Build Tools
+winget install Microsoft.VisualStudio.2022.BuildTools
+# During install: select "Desktop development with C++"
+
+# Then run with MSVC target
+cargo tauri dev --target x86_64-pc-windows-msvc
 ```
 
-First run compiles Rust (~2 minutes). Subsequent runs start in under a second. Frontend changes hot-reload instantly without recompiling.
+WebView2 is pre-installed on Windows 11. If missing:
+```bash
+winget install Microsoft.EdgeWebView2Runtime
+```
 
 ---
 
@@ -148,10 +71,73 @@ First run compiles Rust (~2 minutes). Subsequent runs start in under a second. F
 1. Go to [aistudio.google.com](https://aistudio.google.com/apikey)
 2. Sign in with a Google account
 3. Click **Create API key**
-4. Copy the key
-5. Open Burrowstock → Settings → API & Model → paste key → Save
+4. Open Burrowstock → Settings → API & Model → paste key → Save
 
 **Free tier:** 1,500 requests/day · 15 requests/minute · No credit card required
+
+---
+
+## What it does
+
+### 📷 AI-Powered Scanning
+Photograph a pile of items — a box of electronics, a shelf of tools, a wardrobe. Gemini Vision identifies every single item visible, even partially hidden ones. One photo can yield 20+ catalogued items in seconds.
+
+- Identifies brand, model, generation, ports (for IT hardware)
+- Notes condition, colour, size, visible defects
+- Assigns eBay-standard conditions: Brand New / Like New / Very Good / Good / Acceptable
+- Shows confidence score per item
+- Tracks tokens used and estimated API cost per scan
+
+### 📦 Location Catalog
+Organise your inventory by physical location — boxes, shelves, rooms, storage units.
+
+- Create unlimited locations with colour coding
+- Inline rename and delete with confirmation
+- Each location stores the original scan photo
+- Click the scan photo thumbnail to open a full zoom/pan modal
+- Filter items within a location instantly
+
+### 🔍 Full-Text Search
+Find anything across your entire catalog instantly using SQLite FTS5.
+
+- Search by item name, notes, category, or location
+- Results appear as you type with 150ms debounce
+- Matching text highlighted in results
+- Results grouped by location, collapsible
+- Handles thousands of items with no slowdown
+
+### 🏷️ AI Listing Generator
+Select an item, add individual photos, and generate a complete marketplace listing.
+
+- Supports: **eBay**, **Facebook Marketplace**, **Gumtree**, **OLX**
+- AI writes keyword-rich titles (max 80 chars for eBay)
+- Full description with honest condition report
+- Market-based price estimate with low/high range
+- Copy listing to clipboard — paste anywhere
+- Platform-specific format (formal for eBay, casual for Facebook)
+
+### ✏️ Item Management
+- Click any item to open detail panel
+- Edit name, condition, location, notes inline
+- Move items between locations
+- Rename and delete with confirmation modals
+
+### 🔒 Privacy
+Everything stays on your machine. The only outbound connection is to `generativelanguage.googleapis.com` when you scan or generate a listing. No telemetry. No analytics. No accounts.
+
+---
+
+## Stack
+
+| Layer | Technology |
+|---|---|
+| Desktop shell | Tauri v2 |
+| Backend | Rust |
+| Database | SQLite + FTS5 (rusqlite) |
+| AI Vision | Google Gemini API |
+| UI | Vanilla JS + CSS — no framework |
+
+No npm. No node_modules. No Electron. No bundler.
 
 ---
 
@@ -178,13 +164,13 @@ burrowstock/
 ├── src/
 │   ├── index.html          # App shell
 │   ├── app.js              # All UI — state, render, events
-│   ├── app.css             # Styles — dark/light theme, all components
-│   └── tauri-bridge.js     # window.bs.* — JS to Tauri IPC bridge
+│   ├── app.css             # Styles — dark/light theme
+│   └── tauri-bridge.js     # window.bs.* — JS to Tauri IPC
 └── src-tauri/
     ├── src/
     │   ├── main.rs         # Entry point
     │   ├── lib.rs          # Tauri commands + bslocal:// protocol
-    │   ├── db.rs           # SQLite schema, migrations, queries, FTS5
+    │   ├── db.rs           # SQLite schema, migrations, FTS5
     │   └── vision.rs       # Gemini API — scanning + listing generation
     ├── capabilities/
     │   └── default.json    # Tauri security capabilities
@@ -196,21 +182,11 @@ burrowstock/
 
 ## Roadmap
 
-### v1 (current)
-- Scan photos with AI
-- Full catalog with location management
-- FTS5 search
-- AI listing generator
-- Copy to clipboard for any marketplace
+**v1 (current)** — Scan, catalog, search, generate listings, copy to clipboard
 
-### v2
-- One-click post to eBay via OAuth (user's own account)
-- Facebook Marketplace integration
-- Subscription: $9/month or $79 lifetime
+**v2** — One-click post to eBay via OAuth, Facebook Marketplace integration, $9/month or $79 lifetime
 
-### v3
-- Mobile companion app (iOS/Android) for taking sell photos
-- Cloud sync across devices (optional, encrypted)
+**v3** — Mobile companion app for item photos, cloud sync (optional, encrypted)
 
 ---
 
