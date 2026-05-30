@@ -1342,6 +1342,14 @@ function showInlineRename(id, currentName) {
   inp?.addEventListener('blur', save);
 }
 
+// ── Theme ─────────────────────────────────────────────────────────────────────
+async function setTheme(theme) {
+  state.settings.theme = theme;
+  document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+  await window.bs.saveSettings(state.settings);
+  render();
+}
+
 // ── Events ────────────────────────────────────────────────────────────────────
 // ── Events ────────────────────────────────────────────────────────────────────────
 function bindEvents() {
@@ -1356,7 +1364,10 @@ function bindEvents() {
   );
 
   // ── Theme toggle ─────────────────────────────────────────────────────────────
-  // theme-toggle handled by master delegation (uses global setTheme)
+  // theme-toggle — direct handler as backup
+  document.getElementById('theme-toggle')?.addEventListener('click', async () => {
+    await setTheme(state.settings.theme === 'light' ? 'dark' : 'light');
+  });
 
   // ── Location filter ───────────────────────────────────────────────────────────
   document.querySelectorAll('[data-loc]').forEach(el =>
@@ -1696,8 +1707,8 @@ function bindEvents() {
     const stab = e.target.closest('[data-settings-tab]');
     if (stab) { state.settingsTab = stab.dataset.settingsTab; render(); return; }
 
-    // Theme toggle
-    if (e.target.id === 'theme-toggle' || e.target.closest('#theme-toggle')) {
+    // Theme toggle — use closest to catch clicks on emoji child
+    if (e.target.closest('#theme-toggle')) {
       await setTheme(state.settings.theme === 'light' ? 'dark' : 'light');
       return;
     }
