@@ -338,8 +338,8 @@ pub fn run() {
                 .expect("Failed to open database");
             app.manage(DbState(Mutex::new(conn)));
 
-            // Open DevTools in development builds
-            #[cfg(debug_assertions)]
+            // Open DevTools in development builds (Linux/macOS only — freezes WebView2 on Windows)
+            #[cfg(all(debug_assertions, not(target_os = "windows")))]
             {
                 let window = app.get_webview_window("main").unwrap();
                 window.open_devtools();
