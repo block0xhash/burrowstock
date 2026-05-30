@@ -230,31 +230,24 @@ pub fn upsert_location(conn: &Connection, id: &str, label: &str) -> Result<(), D
 }
 
 pub fn rename_location(conn: &Connection, old_id: &str, new_id: &str) -> Result<(), DbError> {
-    // Disable FK checks temporarily so we can repoint items before deleting old location
+    // Use DEFERRED transaction + FK off to atomically rename
     conn.pragma_update(None, "foreign_keys", "OFF")?;
-
+    conn.execute_batch("BEGIN;")?;
     let result = (|| -> Result<(), DbError> {
-        // 1. Insert new location copying from old
         conn.execute("
             INSERT INTO locations (id, label, location, created_at)
             SELECT ?1, label, location, created_at FROM locations WHERE id=?2
         ", params![new_id, old_id])?;
-
-        // 2. Repoint all items to new location
-        conn.execute(
-            "UPDATE items SET location_id=?1 WHERE location_id=?2",
-            params![new_id, old_id]
-        )?;
-
-        // 3. Delete old location
+        conn.execute("UPDATE items SET location_id=?1 WHERE location_id=?2", params![new_id, old_id])?;
         conn.execute("DELETE FROM locations WHERE id=?1", params![old_id])?;
-
         Ok(())
     })();
-
-    // Re-enable FK checks regardless of outcome
+    if result.is_ok() {
+        conn.execute_batch("COMMIT;")?;
+    } else {
+        conn.execute_batch("ROLLBACK;").ok();
+    }
     conn.pragma_update(None, "foreign_keys", "ON")?;
-
     result
 }
 

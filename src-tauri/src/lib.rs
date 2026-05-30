@@ -37,7 +37,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             gemini_key:          String::new(),
-            gemini_model:        "gemini-2.5-flash".to_string(),
+            gemini_model:        "gemini-3.5-flash".to_string(),
             theme:               "dark".to_string(),
             scan_prompt:         None,
             total_input_tokens:  0,
@@ -199,7 +199,7 @@ async fn scan_photo(
             s.total_input_tokens  += result.input_tokens as u64;
             s.total_output_tokens += result.output_tokens as u64;
             s.total_scans         += 1;
-            let _ = std::fs::write(&path, serde_json::to_string_pretty(&s).unwrap_or_default());
+            if let Ok(json) = serde_json::to_string_pretty(&s) { let _ = std::fs::write(&path, json); }
         }
     }
 
@@ -246,11 +246,9 @@ async fn save_scan(
 #[tauri::command]
 async fn list_models(api_key: String) -> Result<Vec<String>, String> {
     let client = reqwest::Client::new();
-    let url    = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models?key={}",
-        api_key
-    );
-    let resp: serde_json::Value = client.get(&url)
+    let url = "https://generativelanguage.googleapis.com/v1beta/models";
+    let resp: serde_json::Value = client.get(url)
+        .header("x-goog-api-key", &api_key)
         .send().await.map_err(|e| e.to_string())?
         .json().await.map_err(|e| e.to_string())?;
 

@@ -175,6 +175,7 @@ function applyFilter() {
 // ── Render ────────────────────────────────────────────────────────────────────
 function render() {
   document.getElementById('root').innerHTML = shell();
+  applyTheme(state.settings.theme);
   bindEvents();
 }
 
@@ -1352,6 +1353,7 @@ async function setTheme(theme) {
 
 // ── Events ────────────────────────────────────────────────────────────────────
 // ── Events ────────────────────────────────────────────────────────────────────────
+let _docEventsBound = false;
 function bindEvents() {
   // ── Navigation ──────────────────────────────────────────────────────────────
   document.querySelectorAll('[data-tab]').forEach(el =>
@@ -1364,10 +1366,7 @@ function bindEvents() {
   );
 
   // ── Theme toggle ─────────────────────────────────────────────────────────────
-  // theme-toggle — direct handler as backup
-  document.getElementById('theme-toggle')?.addEventListener('click', async () => {
-    await setTheme(state.settings.theme === 'light' ? 'dark' : 'light');
-  });
+  // theme-toggle handled by master delegation
 
   // ── Location filter ───────────────────────────────────────────────────────────
   document.querySelectorAll('[data-loc]').forEach(el =>
@@ -1556,22 +1555,7 @@ function bindEvents() {
     })
   );
 
-  // ── Item row click → detail panel ─────────────────────────────────────────────
-  // Use event delegation for item rows — works after every render
-  document.addEventListener('click', async e => {
-    const row = e.target.closest('.item-row[data-item-id]');
-    if (!row) return;
-    if (e.target.closest('.row-actions')) return;
-    if (e.target.closest('.loc-row-actions')) return;
-    if (e.target.closest('[data-sell-id]')) return;
-    const item = await window.bs.getItem(parseInt(row.dataset.itemId));
-    state.selectedItem  = item;
-    state.detailTab     = 'details';
-    state.listing       = null;
-    state.listingPhotos = [];
-    state.listingPrice  = '';
-    render();
-  });
+  // item-row click handled in master delegation
 
   // ── Detail panel ──────────────────────────────────────────────────────────────
   document.getElementById('detail-close-btn')?.addEventListener('click', () => {
@@ -1659,57 +1643,82 @@ function bindEvents() {
   );
 
   // Detail panel save — delegated so works after every render
-  document.addEventListener('click', async e => {
-    if (!e.target.closest || e.target.id !== 'save-detail-btn') return;
-    if (!state.selectedItem) return;
-    const btn       = e.target;
-
-    const name      = document.getElementById('detail-name')?.value?.trim();
-    const condition = document.getElementById('detail-condition')?.value;
-    const notes     = document.getElementById('detail-notes')?.value?.trim();
-    const newLoc    = document.getElementById('detail-location')?.value;
-
-    if (!name) { showToast('Item name cannot be empty', 'error'); return; }
-    btn.innerHTML = '<span class="spin">⟳</span> Saving…';
-    btn.disabled = true;
-    btn.style.opacity = '0.7';
-
-    // Show saving banner in detail header
-    const header = document.querySelector('.detail-header');
-    const banner = document.createElement('div');
-    banner.id = 'saving-banner';
-    banner.style.cssText = 'background:var(--accent);color:#fff;font-size:11px;font-weight:600;text-align:center;padding:4px;letter-spacing:0.05em;animation:pulse 1s infinite';
-    banner.textContent = 'Saving changes…';
-    if (header) header.after(banner);
-
-    try {
-      if (newLoc && newLoc !== state.selectedItem.location_id)
-        await window.bs.moveItem(state.selectedItem.id, newLoc);
-      await window.bs.updateItem(state.selectedItem.id, { name, condition, notes });
-      // Reload just this one item — no full refresh needed
-      state.selectedItem = await window.bs.getItem(state.selectedItem.id);
-      updateItemInState(state.selectedItem);
-      document.getElementById('saving-banner')?.remove();
-      showToast('✓ Changes saved', 'success');
-      render();
-    } catch(err) {
-      document.getElementById('saving-banner')?.remove();
-      showToast('Save failed: ' + String(err), 'error');
-      btn.innerHTML = 'Save changes'; btn.disabled = false; btn.style.opacity = '';
-    }
-  });
+  // save-detail handled in master
 
   // save-detail-btn handled via master delegation below
 
   // ── Master click delegation ───────────────────────────────────────────────────
+  // Document-level listeners only bound once — prevent stacking on re-render
+  if (!_docEventsBound) {
+    _docEventsBound = true;
+
+  // ── MASTER CLICK DELEGATION ─────────────────────────────────────────────────
   document.addEventListener('click', async e => {
+    // Close condition dropdowns on any click
+    document.querySelectorAll('.cond-dropdown').forEach(d => d.style.display = 'none');
+    document.querySelectorAll('.cond-trigger').forEach(t => t.classList.remove('open'));
+
+    // Item row → open detail panel
+    const row = e.target.closest('.item-row[data-item-id]');
+    if (row && !e.target.closest('.row-actions') && !e.target.closest('.loc-row-actions') && !e.target.closest('[data-sell-id]')) {
+      const item = await window.bs.getItem(parseInt(row.dataset.itemId));
+      state.selectedItem = item; state.detailTab = 'details';
+      state.listing = null; state.listingPhotos = []; state.listingPrice = '';
+      render(); return;
+    }
+
+    // Search clear button
+    if (e.target.id === 'search-clear-btn') {
+      state.query = ''; render();
+      setTimeout(() => document.getElementById('search-input')?.focus(), 30);
+      return;
+    }
+
+    // Location group collapse in search
+    if (e.target.dataset?.locGroup) {
+      const id = e.target.dataset.locGroup;
+      state.search.expanded[id] = state.search.expanded[id] === false ? true : false;
+      render(); return;
+    }
+
     // Settings tab navigation
     const stab = e.target.closest('[data-settings-tab]');
     if (stab) { state.settingsTab = stab.dataset.settingsTab; render(); return; }
 
-    // Theme toggle — use closest to catch clicks on emoji child
-    if (e.target.closest('#theme-toggle')) {
-      await setTheme(state.settings.theme === 'light' ? 'dark' : 'light');
+    // Theme toggle
+    if (e.target.id === 'theme-toggle' || e.target.closest('#theme-toggle')) {
+      e.stopPropagation();
+      e.preventDefault();
+      const next = state.settings.theme === 'light' ? 'dark' : 'light';
+      state.settings.theme = next;
+      document.documentElement.dataset.theme = next;
+      render();
+      window.bs.saveSettings(state.settings).catch(console.error);
+      return;
+    }
+
+    // Save detail panel
+    if (e.target.id === 'save-detail-btn' || e.target.closest('#save-detail-btn')) {
+      if (!state.selectedItem) return;
+      const btn = document.getElementById('save-detail-btn');
+      const name      = document.getElementById('detail-name')?.value?.trim();
+      const condition = document.getElementById('detail-condition')?.value;
+      const notes     = document.getElementById('detail-notes')?.value?.trim();
+      const newLoc    = document.getElementById('detail-location')?.value;
+      if (!name) { showToast('Item name cannot be empty', 'error'); return; }
+      if (btn) { btn.innerHTML = '<span class="spin">⟳</span> Saving…'; btn.disabled = true; }
+      try {
+        if (newLoc && newLoc !== state.selectedItem.location_id)
+          await window.bs.moveItem(state.selectedItem.id, newLoc);
+        await window.bs.updateItem(state.selectedItem.id, { name, condition, notes });
+        state.selectedItem = await window.bs.getItem(state.selectedItem.id);
+        updateItemInState(state.selectedItem);
+        showToast('✓ Changes saved', 'success');
+        render();
+      } catch(err) {
+        showToast('Save failed: ' + String(err), 'error');
+        if (btn) { btn.innerHTML = 'Save changes'; btn.disabled = false; }
+      }
       return;
     }
 
@@ -1725,7 +1734,7 @@ function bindEvents() {
     }
 
     // Model custom dropdown — option selected
-    const modelOpt = e.target.closest('#model-dropdown .custom-select-option');
+    const modelOpt = e.target.closest('.custom-select-option[data-value]');
     if (modelOpt) {
       const val = modelOpt.dataset.value;
       const inp = document.getElementById('model-input');
@@ -1873,6 +1882,8 @@ Keywords: ${(l.keywords||[]).join(', ')}`;
       return;
     }
   });
+
+  } // end if (!_eventsBound)
 
   // ── Detail resize ─────────────────────────────────────────────────────────────
   initDetailResizer();
@@ -2109,18 +2120,7 @@ SEARCH TERMS: ${(l.keywords||[]).join(', ')}`;
       }
     }, 150);
   });
-  document.addEventListener('click', e => {
-    if (e.target.id === 'search-clear-btn') {
-      state.query = '';
-      render();
-      setTimeout(() => document.getElementById('search-input')?.focus(), 30);
-    }
-    if (e.target.dataset?.locGroup) {
-      const id = e.target.dataset.locGroup;
-      state.search.expanded[id] = state.search.expanded[id] === false ? true : false;
-      render();
-    }
-  });
+  // search-clear and loc-group handled in master delegation
 
   document.getElementById('items-search')?.addEventListener('input', e => {
     state.query = e.target.value;
@@ -2180,9 +2180,7 @@ SEARCH TERMS: ${(l.keywords||[]).join(', ')}`;
   });
 
   // Close condition dropdowns on outside click
-  document.addEventListener('click', () => {
-    document.querySelectorAll('.cond-dropdown').forEach(d => d.style.display = 'none');
-  });
+  // cond-dropdown close in master
   document.querySelectorAll('[data-field="location"]').forEach(el =>
     el.addEventListener('input', () => { state.scan.results[el.dataset.idx].location = el.value; })
   );
