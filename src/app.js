@@ -1697,9 +1697,46 @@ function bindEvents() {
     if (stab) { state.settingsTab = stab.dataset.settingsTab; render(); return; }
 
     // Theme toggle
-    if (e.target.id === 'theme-toggle') {
-      setTheme(state.settings.theme === 'light' ? 'dark' : 'light');
+    if (e.target.id === 'theme-toggle' || e.target.closest('#theme-toggle')) {
+      await setTheme(state.settings.theme === 'light' ? 'dark' : 'light');
       return;
+    }
+
+    // Model custom dropdown — trigger opens/closes
+    if (e.target.closest('#model-trigger')) {
+      const dd = document.getElementById('model-dropdown');
+      const tr = document.getElementById('model-trigger');
+      if (!dd) return;
+      const open = dd.style.display !== 'none';
+      dd.style.display = open ? 'none' : 'block';
+      tr?.classList.toggle('open', !open);
+      return;
+    }
+
+    // Model custom dropdown — option selected
+    const modelOpt = e.target.closest('#model-dropdown .custom-select-option');
+    if (modelOpt) {
+      const val = modelOpt.dataset.value;
+      const inp = document.getElementById('model-input');
+      const txt = document.getElementById('model-trigger-text');
+      const dd  = document.getElementById('model-dropdown');
+      const tr  = document.getElementById('model-trigger');
+      if (inp) inp.value = val;
+      if (txt) txt.textContent = val;
+      if (dd)  dd.style.display = 'none';
+      tr?.classList.remove('open');
+      document.querySelectorAll('#model-dropdown .custom-select-option').forEach(o =>
+        o.classList.toggle('selected', o === modelOpt)
+      );
+      return;
+    }
+
+    // Close model dropdown when clicking outside
+    if (!e.target.closest('#model-select-wrap')) {
+      const dd = document.getElementById('model-dropdown');
+      const tr = document.getElementById('model-trigger');
+      if (dd) dd.style.display = 'none';
+      tr?.classList.remove('open');
     }
 
     // Save API settings
