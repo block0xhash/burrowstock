@@ -1349,15 +1349,7 @@ function bindEvents() {
   );
 
   // ── Theme toggle ─────────────────────────────────────────────────────────────
-  document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
-
-  async function setTheme(theme) {
-    state.settings.theme = theme;
-    applyTheme(theme);
-    await window.bs.saveSettings(state.settings);
-    render();
-  }
-  function toggleTheme() { setTheme(state.settings.theme === 'light' ? 'dark' : 'light'); }
+  // theme-toggle handled by master delegation (uses global setTheme)
 
   // ── Location filter ───────────────────────────────────────────────────────────
   document.querySelectorAll('[data-loc]').forEach(el =>
@@ -1707,7 +1699,7 @@ function bindEvents() {
     if (pbtn) { state.listingPlatform = pbtn.dataset.platform; render(); return; }
 
     // Theme toggle
-    if (e.target.id === 'theme-toggle') { setTheme(state.settings.theme === 'light' ? 'dark' : 'light'); return; }
+    if (e.target.id === 'theme-toggle') { setTheme(state.settings.theme === 'light' ? 'dark' : 'light'); return; }  // global setTheme
 
     // Prompt lock toggle
     if (e.target.id === 'toggle-prompt-lock-btn') {
