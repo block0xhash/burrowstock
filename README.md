@@ -10,19 +10,37 @@ Built with Tauri v2 + Rust. Sub-second startup. No cloud. No accounts. No subscr
 
 ## Screenshots
 
-**📷 AI Scan — photograph a pile, Gemini identifies every item**
+### 📷 AI Scan
+Photograph a pile — Gemini identifies every item, condition, and category.
+
 ![Scan flow](screenshots/scan.png)
 
-**📦 Locations — organise your catalog by box, shelf, or room**
+---
+
+### 📦 Locations
+Organise your catalog by box, shelf, or room. Click the scan photo to zoom in.
+
 ![Locations catalog](screenshots/locations.png)
 
-**🔍 Search — find anything across all locations instantly**
+---
+
+### 🔍 Search
+SQLite full-text search across your entire catalog. Results as you type.
+
 ![Search](screenshots/search.png)
 
-**🏷️ Listing generator — AI writes your eBay/Gumtree/Facebook listing**
+---
+
+### 🏷️ Listing Generator
+AI writes your eBay, Gumtree, or Facebook Marketplace listing. Copy and paste anywhere.
+
 ![eBay listing](screenshots/listing.png)
 
-**⚙️ Settings — BYOK Gemini API, usage tracking, AI prompts**
+---
+
+### ⚙️ Settings
+BYOK Gemini API key. Usage tracking, quota bar, and editable AI prompts.
+
 ![Settings](screenshots/settings.png)
 
 ---
