@@ -2,9 +2,20 @@
 
 > Snap it. Burrow it. Find it. Sell it.
 
+
 A local-first desktop app for cataloguing physical items using AI vision. Photograph your pile of junk, let Gemini identify every item, organise by location, search instantly, and generate marketplace listings in seconds.
 
 Built with Tauri v2 + Rust. Sub-second startup. No cloud. No accounts. No subscription.
+
+---
+
+## Screenshots
+
+![Scan flow](screenshots/scan.png)
+![Locations catalog](screenshots/locations.png)
+![Search](screenshots/search.png)
+![eBay listing](screenshots/listing.png)
+![Settings](screenshots/settings.png)
 
 ---
 
