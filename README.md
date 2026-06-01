@@ -2,7 +2,6 @@
 
 > Snap it. Burrow it. Find it. Sell it.
 
-
 A local-first desktop app for cataloguing physical items using AI vision. Photograph your pile of junk, let Gemini identify every item, organise by location, search instantly, and generate marketplace listings in seconds.
 
 Built with Tauri v2 + Rust. Sub-second startup. No cloud. No accounts. No subscription.
@@ -11,10 +10,19 @@ Built with Tauri v2 + Rust. Sub-second startup. No cloud. No accounts. No subscr
 
 ## Screenshots
 
+**📷 AI Scan — photograph a pile, Gemini identifies every item**
 ![Scan flow](screenshots/scan.png)
+
+**📦 Locations — organise your catalog by box, shelf, or room**
 ![Locations catalog](screenshots/locations.png)
+
+**🔍 Search — find anything across all locations instantly**
 ![Search](screenshots/search.png)
+
+**🏷️ Listing generator — AI writes your eBay/Gumtree/Facebook listing**
 ![eBay listing](screenshots/listing.png)
+
+**⚙️ Settings — BYOK Gemini API, usage tracking, AI prompts**
 ![Settings](screenshots/settings.png)
 
 ---
@@ -56,22 +64,30 @@ xcode-select --install
 ```
 
 ### Windows
-Tauri on Windows requires the **MSVC toolchain** — MinGW/GNU will hit a linker limit.
 
+> ⚠️ **MSYS2/MinGW is not supported.** Tauri's debug build exceeds the Windows DLL export limit (65535) which both GNU ld and lld enforce. MSVC is required.
+
+**Step 1 — Install rustup (if using MSYS2, run this inside it):**
 ```bash
-# Add MSVC target
-rustup target add x86_64-pc-windows-msvc
+curl -o rustup-init.exe https://win.rustup.rs/x86_64
+./rustup-init.exe
+# Choose option 1 (default) — installs MSVC toolchain
+```
 
-# Install Visual C++ Build Tools
+**Step 2 — Open PowerShell (not MSYS2) and install build tools:**
+```powershell
 winget install Microsoft.VisualStudio.2022.BuildTools
-# During install: select "Desktop development with C++"
+# During install select: "Desktop development with C++"
+```
 
-# Then run with MSVC target
-cargo tauri dev --target x86_64-pc-windows-msvc
+**Step 3 — Run in PowerShell:**
+```powershell
+cd path	ourrowstock
+cargo tauri dev
 ```
 
 WebView2 is pre-installed on Windows 11. If missing:
-```bash
+```powershell
 winget install Microsoft.EdgeWebView2Runtime
 ```
 
